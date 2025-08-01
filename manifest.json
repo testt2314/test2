@@ -1,0 +1,58 @@
+{
+  "manifest_version": 2,
+  "name": "Currency Converter to MYR",
+  "version": "1.1.0",
+  "description": "Convert selected currency amounts to Malaysian Ringgit (MYR) using live rates from Wise via context menu",
+  
+  "permissions": [
+    "activeTab",
+    "storage",
+    "contextMenus",
+    "https://wise.com/*",
+    "https://*/*",
+    "http://*/*"
+  ],
+  
+  "content_security_policy": "script-src 'self'; object-src 'self'",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "wise_currency_converter@12.34",
+      "strict_min_version": "86.0",
+      "update_url": "https://github.com/testt2314/plugin/updates.json"
+    }
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["popup.css"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  
+  "browser_action": {
+    "default_title": "Currency Converter Settings",
+    "default_popup": "options.html"
+  },
+  
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  
+  "web_accessible_resources": [
+    "popup.html",
+    "popup.css"
+  
+  ],
+
+  "version": "1.1.2"
+}
