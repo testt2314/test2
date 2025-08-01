@@ -143,6 +143,35 @@
       background: #6c757d;
       cursor: not-allowed;
     }
+
+    .clear-cache-button {
+      width: 100%;
+      padding: 8px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      margin-top: 8px;
+    }
+    
+    .clear-cache-button:hover {
+      background: #c82333;
+    }
+
+    .cache-info {
+      margin-top: 15px;
+      padding: 10px;
+      background: #e9ecef;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #495057;
+      line-height: 1.4;
+      border: 1px solid #dee2e6;
+    }
     
     .status-message {
       margin-top: 10px;
@@ -236,7 +265,13 @@
   
   <button id="refreshRatesButton" class="refresh-rates-button">🔄 Refresh All Rates Now</button>
   
+  <button id="clearCacheButton" class="clear-cache-button">🗑️ Clear Rate Cache</button>
+  
   <div id="statusMessage" class="status-message"></div>
+  
+  <div id="cacheInfo" class="cache-info">
+    Loading cache information...
+  </div>
   
   <div class="instructions">
     <h4>How to use:</h4>
@@ -247,7 +282,7 @@
       <li>If auto-detect is OFF: shows currency selector first</li>
       <li>View conversion result with live exchange rates</li>
     </ol>
-    <strong>Note:</strong> Exchange rates are cached for 24 hours. They automatically refresh when expired or can be manually refreshed using the button above. No automatic refresh on browser startup.
+    <strong>Rate Caching:</strong> Exchange rates are cached browser-wide for 24 hours. Rates are shared across all tabs and persist when browser restarts. Use "Refresh All Rates" to force update all cached rates, or "Clear Rate Cache" to remove all cached data.
   </div>
   
   <script src="options.js"></script>

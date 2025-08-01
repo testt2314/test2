@@ -5,7 +5,7 @@ class CurrencyConverter {
     this.mouseX = 0;
     this.mouseY = 0;
     this.isConverting = false;
-    this.rates = {};
+    this.rates = {}; // This will be loaded from storage
     this.targetCurrency = 'MYR';
     this.autoDetectSource = true;
     this.apiUrl = 'https://wise.com/rates/live';
@@ -52,8 +52,36 @@ class CurrencyConverter {
 
   init() {
     this.loadSettings();
+    this.loadCachedRates(); // Load cached rates from storage
     this.attachEventListeners();
     console.log('Currency Converter initialized with context menu support');
+  }
+
+  async loadCachedRates() {
+    try {
+      if (typeof browser !== 'undefined') {
+        const result = await browser.storage.local.get(['cachedRates']);
+        if (result.cachedRates) {
+          this.rates = result.cachedRates;
+          console.log('Loaded cached rates from storage:', Object.keys(this.rates).length, 'rates');
+        } else {
+          console.log('No cached rates found in storage');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load cached rates:', error);
+    }
+  }
+
+  async saveCachedRates() {
+    try {
+      if (typeof browser !== 'undefined') {
+        await browser.storage.local.set({ cachedRates: this.rates });
+        console.log('Saved rates to storage:', Object.keys(this.rates).length, 'rates');
+      }
+    } catch (error) {
+      console.error('Failed to save cached rates:', error);
+    }
   }
 
   loadSettings() {
@@ -114,7 +142,9 @@ class CurrencyConverter {
       }
     }
     
-    console.log(`Refreshed ${refreshedCount}/${currencies.length} exchange rates`);
+    // Save all refreshed rates to storage
+    await this.saveCachedRates();
+    console.log(`Refreshed ${refreshedCount}/${currencies.length} exchange rates and saved to storage`);
   }
 
   handleContextMenuConversion(selectedText) {
@@ -217,11 +247,14 @@ class CurrencyConverter {
 
     const cacheKey = `${fromCurrency}_${toCurrency}`;
     
+    // Check if rate exists and is valid (less than 24 hours old)
     if (!forceRefresh && this.rates[cacheKey]) {
       const ageHours = (Date.now() - this.rates[cacheKey].timestamp) / (1000 * 60 * 60);
       if (ageHours < 24) {
         console.log(`Using cached rate for ${fromCurrency} to ${toCurrency} (${ageHours.toFixed(1)}h old)`);
         return this.rates[cacheKey].rate;
+      } else {
+        console.log(`Cached rate for ${fromCurrency} to ${toCurrency} is ${ageHours.toFixed(1)}h old, needs refresh`);
       }
     }
 
@@ -253,31 +286,39 @@ class CurrencyConverter {
         console.log(`Using fallback rate for ${fromCurrency} to ${toCurrency}: ${rate}`);
       }
 
+      // Store the rate with timestamp
       this.rates[cacheKey] = {
         rate: rate,
         timestamp: Date.now(),
         source: response.ok ? 'api' : 'fallback'
       };
 
-      console.log(`Rate updated: 1 ${fromCurrency} = ${rate} ${toCurrency}`);
+      // Save to browser storage immediately
+      await this.saveCachedRates();
+
+      console.log(`Rate updated and saved: 1 ${fromCurrency} = ${rate} ${toCurrency}`);
       return rate;
 
     } catch (error) {
       console.error('Error fetching exchange rate:', error);
       
+      // Try to use cached rate even if expired
       if (this.rates[cacheKey]) {
-        console.log(`Using cached rate for ${fromCurrency} to ${toCurrency} due to API error`);
+        const ageHours = (Date.now() - this.rates[cacheKey].timestamp) / (1000 * 60 * 60);
+        console.log(`Using cached rate for ${fromCurrency} to ${toCurrency} due to API error (${ageHours.toFixed(1)}h old)`);
         return this.rates[cacheKey].rate;
       }
       
+      // Use fallback rate as last resort
       const fallbackRate = this.getFallbackRate(fromCurrency, toCurrency);
       
       this.rates[cacheKey] = {
         rate: fallbackRate,
-        timestamp: Date.now() - 1800000,
+        timestamp: Date.now() - 1800000, // Mark as 30 minutes old so it gets refreshed sooner
         source: 'fallback'
       };
       
+      await this.saveCachedRates();
       return fallbackRate;
     }
   }
